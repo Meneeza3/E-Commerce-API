@@ -5,10 +5,14 @@ const userSchema = new Schema<UserDocument>({
   firstName: {
     type: String,
     required: [true, "A user must have a First Name"],
+    minlength: [2, "First Name must be at least 2 characters"],
+    maxlength: [12, "First Name cannot exceed 12 characters"],
   },
   lastName: {
     type: String,
     required: [true, "A user must have a Last Name"],
+    minlength: [2, "Last Name must be at least 2 characters"],
+    maxlength: [12, "Last Name cannot exceed 12 characters"],
   },
   email: {
     type: String,
@@ -17,10 +21,8 @@ const userSchema = new Schema<UserDocument>({
   password: {
     type: String,
     required: [true, "A user must have an Password"],
-  },
-  passwordConfirm: {
-    type: String,
-    required: [true, "u have to enter a Password Confirm"],
+    minlength: [8, "Password must be at least 8 characters"],
+    maxlength: [128, "Password cannot exceed 128 characters"],
   },
   role: {
     type: String,
