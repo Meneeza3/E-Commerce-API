@@ -26,5 +26,4 @@ const signupSchema = z
     path: ["passwordConfirm"], // this shows error on passwordConfirm field
   });
 
-export { signupSchema };
-export type SignupData = z.infer<typeof signupSchema>;
+export { signupSchema }; // check the data at runtime

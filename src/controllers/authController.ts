@@ -1,32 +1,21 @@
+import z, { ZodError } from "zod";
 import { RequestHandler } from "express";
-import User from "../models/userModel";
 import { signupSchema } from "../validation/authValidation";
-import z from "zod";
-
+import authService from "../services/authService";
+import sendResponse from "../utils/sendRes";
+import { send } from "process";
 const signup: RequestHandler = async (req, res, next) => {
   try {
     const validatedData = signupSchema.parse(req.body);
     const { firstName, lastName, email, password } = validatedData;
 
-    const newUser = await User.create({ firstName, lastName, email, password });
-    res.status(201).json({
-      status: "success",
-      message: "user created",
-      data: newUser,
-    });
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      res.status(400).json({
-        status: "fail",
-        message: "Validation Error",
-        errors: err.message,
-      });
+    const newUser = await authService.signup({ firstName, lastName, email, password });
+    sendResponse.success(res, "The user created successfully", newUser);
+  } catch (err: any) {
+    if (err.code === 11000 && err.keyPattern?.email) {
+      sendResponse.badRequest(res, "Email address is already registered");
     } else {
-      res.status(500).json({
-        status: "fail",
-        message: "Validation error",
-        err: "something went wrong",
-      });
+      sendResponse.badRequest(res, "validation Error", err);
     }
   }
 };

@@ -16,6 +16,7 @@ const userSchema = new Schema<UserDocument>({
   },
   email: {
     type: String,
+    unique: true,
     required: [true, "A user must have an Email"],
   },
   password: {
