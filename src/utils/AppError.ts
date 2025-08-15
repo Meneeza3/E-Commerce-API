@@ -8,6 +8,7 @@ class AppError extends Error {
 
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
+    // make the error trusted
     this.isOperational = true;
 
     // stack trace for where error was thrown
