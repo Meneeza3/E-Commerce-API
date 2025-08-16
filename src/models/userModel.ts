@@ -24,6 +24,7 @@ const userSchema = new Schema<UserDocument>({
     required: [true, "A user must have an Password"],
     minlength: [8, "Password must be at least 8 characters"],
     maxlength: [128, "Password cannot exceed 128 characters"],
+    select: false,
   },
   role: {
     type: String,

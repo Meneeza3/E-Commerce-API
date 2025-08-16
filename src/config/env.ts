@@ -12,5 +12,7 @@ export default z
       .string()
       .regex(/^mongodb(\+srv)?:\/\//, "DATABASE must be a valid MongoDB connection string"),
     DATABASE_PASS: z.string(),
+    JWT_SECRET: z.string(),
+    JWT_EXPIRES_IN: z.string(),
   })
   .parse(process.env);

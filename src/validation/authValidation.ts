@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { email, z } from "zod";
 
 const signupSchema = z
   .object({
@@ -26,4 +26,12 @@ const signupSchema = z
     path: ["passwordConfirm"], // this shows error on passwordConfirm field
   });
 
-export { signupSchema }; // check the data at runtime
+const loginSchema = z.object({
+  email: z.string().email("Please provide a valid email address"),
+  password: z
+    .string()
+    .min(8, "your Password is at least 8 characters")
+    .max(128, "Password is at most 128 characters"),
+});
+
+export { signupSchema, loginSchema }; // check the data at runtime
