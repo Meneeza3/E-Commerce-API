@@ -8,16 +8,21 @@ const signup: RequestHandler = catchAsync(async (req, res) => {
   const validatedData = signupSchema.parse(req.body);
   const { firstName, lastName, email, password } = validatedData;
 
-  const newUser = await authService.signup({ firstName, lastName, email, password });
+  const { userObj: newUser, token } = await authService.signup({
+    firstName,
+    lastName,
+    email,
+    password,
+  });
 
-  sendResponse.success(res, "The user created successfully", newUser);
+  sendResponse.success(res, "The user created successfully", newUser, token);
 });
 
 const login: RequestHandler = catchAsync(async (req, res) => {
   const validatedData = loginSchema.parse(req.body);
   const { email, password } = validatedData;
 
-  const user = await authService.login({ email, password });
-  sendResponse.success(res, "User Logged in successfully", user);
+  const { userObj: user, token } = await authService.login({ email, password });
+  sendResponse.success(res, "User Logged in successfully", user, token);
 });
 export { signup, login };

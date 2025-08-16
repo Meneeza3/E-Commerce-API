@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import { signupData, loginData } from "../types/authTypes";
 import User from "../models/userModel";
 import AppError from "../utils/AppError";
@@ -6,7 +7,14 @@ import env from "../config/env";
 
 // Remember: don't return the res in service BUT throw errors to catch it in the controller
 class authService {
-  //private createSendToken = ();
+  //jwt.sign(payload, secretOrPrivateKey, [options, callback])
+  //jwt.verify(token, secretOrPublicKey, [options, callback])
+
+  private signToken = (id: string) => {
+    return jwt.sign({ id }, env.JWT_SECRET, {
+      expiresIn: env.JWT_EXPIRES_IN,
+    } as object);
+  };
 
   async signup(data: signupData) {
     const checkUser = await User.findOne({ email: data.email });
@@ -22,7 +30,8 @@ class authService {
 
     // to not send the password in the res
     const { password, ...userObj } = user.toObject();
-    return userObj;
+    const token = this.signToken(user.id);
+    return { userObj, token };
   }
 
   async login(data: loginData) {
@@ -31,8 +40,10 @@ class authService {
     if (!user || !(await bcrypt.compare(data.password, user.password)))
       throw new AppError("Email or Password not correct", 401);
 
+    const token = this.signToken(user.id);
+
     const { password, ...userObj } = user.toObject();
-    return userObj;
+    return { userObj, token };
   }
 }
 
