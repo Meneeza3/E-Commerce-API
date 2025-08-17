@@ -20,7 +20,7 @@ const signupSchema = z
       .max(128, "Password cannot exceed 128 characters"),
 
     passwordConfirm: z.string(),
-    role: z.string().optional().default("user"),
+    role: z.enum(["user", "admin"]).optional().default("user"),
   })
   .refine((data) => data.password === data.passwordConfirm, {
     message: "Passwords don't match",

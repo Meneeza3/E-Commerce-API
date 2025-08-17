@@ -1,10 +1,10 @@
 import { Response } from "express";
 
 class sendResponse {
-  static success(res: Response, message: string, data?: any, token?: string) {
+  static success(res: Response, message: string, data?: any, accessToken?: string) {
     return res.status(200).json({
       status: "success",
-      token,
+      accessToken,
       message,
       data,
     });

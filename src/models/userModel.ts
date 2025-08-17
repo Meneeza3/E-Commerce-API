@@ -18,6 +18,7 @@ const userSchema = new Schema<UserDocument>({
     type: String,
     unique: true,
     required: [true, "A user must have an Email"],
+    //index: true,
   },
   password: {
     type: String,
@@ -29,6 +30,11 @@ const userSchema = new Schema<UserDocument>({
   role: {
     type: String,
     default: "user",
+  },
+  refreshToken: {
+    type: String,
+    default: null,
+    select: false,
   },
 });
 

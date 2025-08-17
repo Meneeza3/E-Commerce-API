@@ -11,16 +11,22 @@ class authService {
   //jwt.verify(token, secretOrPublicKey, [options, callback])
 
   private signToken = (id: string) => {
-    return jwt.sign({ id }, env.JWT_SECRET, {
-      expiresIn: env.JWT_EXPIRES_IN,
+    const accessToken = jwt.sign({ id }, env.JWT_ACCESS_SECRET, {
+      expiresIn: env.JWT_ACCESS_EXPIRES_IN,
     } as object);
+
+    const refreshToken = jwt.sign({ id }, env.JWT_REFRESH_SECRET, {
+      expiresIn: env.JWT_REFRESH_EXPIRES_IN,
+    } as object);
+
+    return { accessToken, refreshToken };
   };
 
   async signup(data: signupData) {
     const checkUser = await User.findOne({ email: data.email });
     if (checkUser) throw new AppError("User Already Existed", 400);
 
-    const hashedPassword = await bcrypt.hash(data.password, 12);
+    const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = await User.create({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -29,10 +35,13 @@ class authService {
       role: data.role,
     });
 
+    const { accessToken, refreshToken } = this.signToken(user.id);
+
+    await User.findByIdAndUpdate(user.id, { refreshToken });
+
     // to not send the password in the res
-    const { password, ...userObj } = user.toObject();
-    const token = this.signToken(user.id);
-    return { userObj, token };
+    const { password, refreshToken: _, ...userObj } = user.toObject();
+    return { userObj, accessToken, refreshToken };
   }
 
   async login(data: loginData) {
@@ -41,10 +50,14 @@ class authService {
     if (!user || !(await bcrypt.compare(data.password, user.password)))
       throw new AppError("Email or Password not correct", 401);
 
-    const token = this.signToken(user.id);
+    const { accessToken, refreshToken } = this.signToken(user.id);
 
-    const { password, ...userObj } = user.toObject();
-    return { userObj, token };
+    const { password, refreshToken: _, ...userObj } = user.toObject();
+    return { userObj, accessToken, refreshToken };
+  }
+
+  async logout(userId: string) {
+    await User.findByIdAndUpdate(userId, { refreshToken: null });
   }
 }
 
