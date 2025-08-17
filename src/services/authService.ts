@@ -26,6 +26,7 @@ class authService {
       lastName: data.lastName,
       email: data.email,
       password: hashedPassword,
+      role: data.role,
     });
 
     // to not send the password in the res

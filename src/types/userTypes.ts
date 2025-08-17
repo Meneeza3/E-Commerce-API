@@ -7,7 +7,7 @@ export type UserDocument = Document & {
   email: string;
   password: string;
   passwordConfirm: string;
-  role?: "admin" | "user";
+  role: "admin" | "user";
 };
 
 // structure of the static methods (on the model itself)
