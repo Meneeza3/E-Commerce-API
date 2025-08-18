@@ -37,7 +37,9 @@ class authService {
 
     const { accessToken, refreshToken } = this.signToken(user.id);
 
-    await User.findByIdAndUpdate(user.id, { refreshToken });
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
+    await User.findByIdAndUpdate(user.id, { refreshToken: hashedRefreshToken });
 
     // to not send the password in the res
     const { password, refreshToken: _, ...userObj } = user.toObject();
@@ -52,12 +54,37 @@ class authService {
 
     const { accessToken, refreshToken } = this.signToken(user.id);
 
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await User.findByIdAndUpdate(user.id, { refreshToken: hashedRefreshToken });
+
     const { password, refreshToken: _, ...userObj } = user.toObject();
     return { userObj, accessToken, refreshToken };
   }
 
   async logout(userId: string) {
     await User.findByIdAndUpdate(userId, { refreshToken: null });
+  }
+
+  async refreshToken(refreshToken: string) {
+    let decoded: any;
+
+    // in protect: check access token, in refreshToken: check refrseh token
+    try {
+      decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as { id: string };
+    } catch (_) {
+      throw new AppError("Invalid refresh token", 400);
+    }
+
+    const user = await User.findById(decoded.id).select("+refreshToken");
+    if (!user || !(await bcrypt.compare(refreshToken, user.refreshToken)))
+      throw new AppError("Invalid refresh token", 400);
+
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = this.signToken(user.id);
+
+    const hashedNewRefreshToken = await bcrypt.hash(newRefreshToken, 10);
+    await User.findByIdAndUpdate(user.id, { refreshToken: hashedNewRefreshToken });
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 }
 

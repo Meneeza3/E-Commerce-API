@@ -1,9 +1,27 @@
-import { RequestHandler } from "express";
+import { RequestHandler, Response } from "express";
 import { signupSchema, loginSchema } from "../validation/authValidation";
 import authService from "../services/authService";
 import sendResponse from "../utils/sendRes";
 import catchAsync from "../utils/catchAsync";
 import env from "../config/env";
+import AppError from "../utils/AppError";
+
+const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30d
+  });
+};
+
+const clearRefreshTokenCookie = (res: Response) => {
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+};
 
 const signup: RequestHandler = catchAsync(async (req, res) => {
   const validatedData = signupSchema.parse(req.body);
@@ -24,12 +42,7 @@ const signup: RequestHandler = catchAsync(async (req, res) => {
   });
 
   // refresh token in http cookie only
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 30 * 34 * 60 * 60 * 1000, // 30d
-  });
+  setRefreshTokenCookie(res, refreshToken);
 
   // send only access token in the res
   sendResponse.success(res, "The user created successfully", newUser, accessToken);
@@ -42,18 +55,27 @@ const login: RequestHandler = catchAsync(async (req, res) => {
   const { userObj: user, accessToken, refreshToken } = await authService.login({ email, password });
 
   // refresh token in http cookie only
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 30 * 34 * 60 * 60 * 1000, // 30d
-  });
+  setRefreshTokenCookie(res, refreshToken);
 
   sendResponse.success(res, "User Logged in successfully", user, accessToken);
 });
 
-const logout: RequestHandler = async (req, res) => {
+const logout: RequestHandler = catchAsync(async (req, res) => {
   await authService.logout(req.user!.id);
+  clearRefreshTokenCookie(res);
   sendResponse.success(res, "User Logged out successfully");
-};
-export { signup, login, logout };
+});
+
+const refreshToken: RequestHandler = catchAsync(async (req, res) => {
+  const oldRefreshToken = req.cookies.refreshToken;
+  if (!oldRefreshToken) throw new AppError("Refresh Token not found", 401);
+
+  const { accessToken, refreshToken } = await authService.refreshToken(oldRefreshToken);
+
+  clearRefreshTokenCookie(res); // to avoid any browser cookie conflicts
+  setRefreshTokenCookie(res, refreshToken);
+
+  sendResponse.success(res, "Tokens now updated", null, accessToken);
+});
+
+export { signup, login, logout, refreshToken };

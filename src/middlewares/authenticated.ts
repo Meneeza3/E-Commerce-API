@@ -23,12 +23,12 @@ const protect: RequestHandler = catchAsync(async (req, res, next) => {
     return next(new AppError("Invalid Token", 400));
   }
 
-  // check for the user belonging to this token
+  // 3- check for the user belonging to this token
   const checkUser = await User.findById(decodedData.id).select("+refreshToken");
   if (!checkUser)
     return next(new AppError("The user belonging to this token no longer exist", 404));
 
-  // check for the refresh token (user can be logged out)
+  // 4- check for the refresh token (user can be logged out)
   if (!checkUser.refreshToken) return next(new AppError("Please login again first", 401));
 
   // check if the user change his password after the token created
