@@ -1,7 +1,12 @@
 import { RequestHandler, Response } from "express";
-import { signupSchema, loginSchema } from "../validation/authValidation";
+import {
+  signupSchema,
+  loginSchema,
+  resetPasswordSchema,
+  resetPasswordWithTokenSchema,
+} from "../validation/authValidation";
 import authService from "../services/authService";
-import sendResponse from "../utils/sendRes";
+import sendResponse from "../utils/sendResponse";
 import catchAsync from "../utils/catchAsync";
 import env from "../config/env";
 import AppError from "../utils/AppError";
@@ -29,11 +34,7 @@ const signup: RequestHandler = catchAsync(async (req, res) => {
   let { role } = validatedData;
 
   if (role != "admin") role = "user";
-  const {
-    userObj: newUser,
-    accessToken,
-    refreshToken,
-  } = await authService.signup({
+  const { userObj, accessToken, refreshToken } = await authService.signup({
     firstName,
     lastName,
     email,
@@ -45,7 +46,7 @@ const signup: RequestHandler = catchAsync(async (req, res) => {
   setRefreshTokenCookie(res, refreshToken);
 
   // send only access token in the res
-  sendResponse.success(res, "The user created successfully", newUser, accessToken);
+  sendResponse.success(res, "The user created successfully", userObj, accessToken);
 });
 
 const login: RequestHandler = catchAsync(async (req, res) => {
@@ -78,4 +79,26 @@ const refreshToken: RequestHandler = catchAsync(async (req, res) => {
   sendResponse.success(res, "Tokens now updated", null, accessToken);
 });
 
-export { signup, login, logout, refreshToken };
+// user logged in or not
+const resetPassword: RequestHandler = catchAsync(async (req, res) => {
+  const validatedData = resetPasswordSchema.parse(req.body);
+
+  const { email } = validatedData;
+  const message = await authService.resetPassword(email);
+
+  sendResponse.success(res, message);
+});
+
+const resetPasswordWithToken: RequestHandler = catchAsync(async (req, res) => {
+  const validatedData = resetPasswordWithTokenSchema.parse(req.body);
+  const { newPassword } = validatedData;
+  const { token } = req.params;
+
+  const { user, message } = await authService.resetPasswordWithToken(newPassword, token);
+
+  // logout the user after changing the password
+  authService.logout(user.id);
+  sendResponse.success(res, message);
+});
+
+export { signup, login, logout, refreshToken, resetPassword, resetPasswordWithToken };

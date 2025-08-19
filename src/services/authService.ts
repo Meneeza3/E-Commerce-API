@@ -4,6 +4,9 @@ import User from "../models/userModel";
 import AppError from "../utils/AppError";
 import bcrypt from "bcrypt";
 import env from "../config/env";
+import crypto, { hash } from "crypto";
+import EmailService from "../utils/emailService";
+import emailService from "../utils/emailService";
 
 // Remember: don't return the res in service BUT throw errors to catch it in the controller
 class authService {
@@ -41,8 +44,14 @@ class authService {
 
     await User.findByIdAndUpdate(user.id, { refreshToken: hashedRefreshToken });
 
-    // to not send the password in the res
-    const { password, refreshToken: _, ...userObj } = user.toObject();
+    // send the data i want
+    const userObj = {
+      _id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+    };
     return { userObj, accessToken, refreshToken };
   }
 
@@ -57,7 +66,14 @@ class authService {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     await User.findByIdAndUpdate(user.id, { refreshToken: hashedRefreshToken });
 
-    const { password, refreshToken: _, ...userObj } = user.toObject();
+    const userObj = {
+      _id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+    };
+
     return { userObj, accessToken, refreshToken };
   }
 
@@ -85,6 +101,49 @@ class authService {
     await User.findByIdAndUpdate(user.id, { refreshToken: hashedNewRefreshToken });
 
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  }
+
+  async resetPassword(email: string) {
+    const user = await User.findOne({ email });
+    if (!user) throw new AppError("No user belongs to this email", 400);
+
+    const resetToken = crypto.randomBytes(32).toString("hex"); // to user
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex"); // in DB
+    const tokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    await User.findByIdAndUpdate(user.id, {
+      passwordResetToken: hashedToken,
+      passwordResetTokenExpires: tokenExpiry,
+    });
+
+    emailService.sendResetEmail(user.email, user.firstName, resetToken);
+
+    const message =
+      "please check your email. If you don't receive an email within 5 minutes, please try again";
+    return message;
+  }
+
+  async resetPasswordWithToken(password: string, token: string) {
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetTokenExpires: { $gt: Date.now() },
+    });
+
+    if (!user) throw new AppError("Invalid or expired token", 400);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await User.findByIdAndUpdate(user.id, {
+      password: hashedPassword,
+      passwordChangeAt: Date.now(),
+      passwordResetToken: null,
+      passwordResetTokenExpires: null,
+    });
+
+    return {
+      user,
+      message: "Your password updated successfully, Please login again with your new password",
+    };
   }
 }
 

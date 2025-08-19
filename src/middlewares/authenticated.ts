@@ -20,7 +20,7 @@ const protect: RequestHandler = catchAsync(async (req, res, next) => {
   try {
     decodedData = jwt.verify(token, env.JWT_ACCESS_SECRET) as { id: string };
   } catch (_) {
-    return next(new AppError("Invalid Token", 400));
+    return next(new AppError("h Invalid Token", 400));
   }
 
   // 3- check for the user belonging to this token

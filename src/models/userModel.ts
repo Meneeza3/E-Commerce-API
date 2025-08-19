@@ -36,6 +36,21 @@ const userSchema = new Schema<UserDocument>({
     default: null,
     select: false,
   },
+  passwordChangeAt: {
+    type: Date,
+    default: null,
+    select: false,
+  },
+  passwordResetToken: {
+    type: String,
+    default: null,
+    select: false,
+  },
+  passwordResetTokenExpires: {
+    type: Date,
+    default: null,
+    select: false,
+  },
 });
 
 // lose TS benefits

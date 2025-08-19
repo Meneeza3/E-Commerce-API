@@ -1,3 +1,4 @@
+import { emit } from "process";
 import { email, z } from "zod";
 
 const signupSchema = z
@@ -35,4 +36,22 @@ const loginSchema = z.object({
     .max(128, "Password is at most 128 characters"),
 });
 
-export { signupSchema, loginSchema }; // check the data at runtime
+const resetPasswordSchema = z.object({
+  email: z.string().email("Please provide a valid email address"),
+});
+
+const resetPasswordWithTokenSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128, "Password cannot exceed 128 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+// check the data at runtime
+export { signupSchema, loginSchema, resetPasswordSchema, resetPasswordWithTokenSchema };

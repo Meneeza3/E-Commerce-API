@@ -9,6 +9,9 @@ export type UserDocument = Document & {
   passwordConfirm: string;
   role: "admin" | "user";
   refreshToken: string;
+  passwordResetToken: string;
+  passwordResetTokenExpires: Date;
+  passwordChangeAt: Date;
 };
 
 // structure of the static methods (on the model itself)
