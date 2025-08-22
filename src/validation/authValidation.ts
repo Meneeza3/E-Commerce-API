@@ -1,5 +1,4 @@
-import { emit } from "process";
-import { email, z } from "zod";
+import { z } from "zod";
 
 const signupSchema = z
   .object({
