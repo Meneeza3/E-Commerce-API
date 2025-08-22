@@ -29,9 +29,7 @@ const protect: RequestHandler = catchAsync(async (req, res, next) => {
     return next(new AppError("The user belonging to this token no longer exist", 404));
 
   // 4- check for the refresh token (user can be logged out)
-  if (!checkUser.refreshToken) return next(new AppError("Please login again first", 401));
-
-  // check if the user change his password after the token created
+  if (!checkUser.refreshToken) return next(new AppError("Please login first", 401));
 
   req.user = checkUser;
   next();

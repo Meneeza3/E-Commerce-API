@@ -135,7 +135,6 @@ class authService {
     const hashedPassword = await bcrypt.hash(password, 10);
     await User.findByIdAndUpdate(user.id, {
       password: hashedPassword,
-      passwordChangeAt: Date.now(),
       passwordResetToken: null,
       passwordResetTokenExpires: null,
     });

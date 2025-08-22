@@ -11,7 +11,6 @@ export type UserDocument = Document & {
   refreshToken: string;
   passwordResetToken: string;
   passwordResetTokenExpires: Date;
-  passwordChangeAt: Date;
 };
 
 // structure of the static methods (on the model itself)
